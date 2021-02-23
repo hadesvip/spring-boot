@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.boot.ApplicationContextFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -111,14 +112,15 @@ public class SpringBootContextLoader extends AbstractContextLoader {
 			application.setWebApplicationType(WebApplicationType.REACTIVE);
 			if (!isEmbeddedWebEnvironment(config)) {
 				application.setApplicationContextFactory(
-						(webApplicationType) -> new GenericReactiveWebApplicationContext());
+						ApplicationContextFactory.of(GenericReactiveWebApplicationContext::new));
 			}
 		}
 		else {
 			application.setWebApplicationType(WebApplicationType.NONE);
 		}
 		application.setInitializers(initializers);
-		return application.run(getArgs(config));
+		String[] args = SpringBootTestArgs.get(config.getContextCustomizers());
+		return application.run(args);
 	}
 
 	/**
@@ -137,19 +139,6 @@ public class SpringBootContextLoader extends AbstractContextLoader {
 	 */
 	protected ConfigurableEnvironment getEnvironment() {
 		return new StandardEnvironment();
-	}
-
-	/**
-	 * Return the application arguments to use. If no arguments are available, return an
-	 * empty array.
-	 * @param config the source context configuration
-	 * @return the application arguments to use
-	 * @deprecated since 2.2.7
-	 * @see SpringApplication#run(String...)
-	 */
-	@Deprecated
-	protected String[] getArgs(MergedContextConfiguration config) {
-		return SpringBootTestArgs.get(config.getContextCustomizers());
 	}
 
 	private void setActiveProfiles(ConfigurableEnvironment environment, String[] profiles) {
